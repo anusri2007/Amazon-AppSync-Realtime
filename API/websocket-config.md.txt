@@ -1,0 +1,21 @@
+# Order Status WebSocket API
+
+API Name:
+OrderStatusWebSocket
+
+API Type:
+WebSocket
+
+Region:
+us-east-1
+
+Route Selection Expression:
+$request.body.action
+
+Routes:
+- $connect
+- $disconnect
+- updateOrder
+
+Integration:
+AWS Lambda

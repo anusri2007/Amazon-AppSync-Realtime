@@ -1,0 +1,8 @@
+{
+  "id": {
+    "S": "ORDER511212"
+  },
+  "status": {
+    "S": "OUT_FOR_DELIVERY"
+  }
+}

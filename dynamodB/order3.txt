@@ -1,0 +1,9 @@
+{
+  "TableName": "Orders",
+  "PartitionKey": {
+    "Name": "orderId",
+    "Type": "S"
+  },
+  "SortKey": null,
+  "BillingMode": "PAY_PER_REQUEST"
+}
