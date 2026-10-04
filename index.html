@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QuickBite - Real-Time Food Ordering</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .connection {
+            font-weight: bold;
+        }
+
+        .connected {
+            color: #00c853;
+        }
+
+        .disconnected {
+            color: #ff5252;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .restaurant {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .restaurant h2 {
+            margin-top: 0;
+            font-size: 30px;
+        }
+
+        .restaurant-info {
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .open {
+            color: green;
+            font-weight: bold;
+        }
+
+        .closed {
+            color: red;
+            font-weight: bold;
+        }
+
+        .menu-title {
+            margin-bottom: 15px;
+        }
+
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+        }
+
+        .menu-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .menu-card h3 {
+            margin-top: 0;
+        }
+
+        .price {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 12px 0;
+        }
+
+        button {
+            border: none;
+            border-radius: 7px;
+            padding: 11px 16px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .add-btn {
+            background: #111;
+            color: white;
+            width: 100%;
+        }
+
+        .add-btn:hover {
+            background: #333;
+        }
+
+        .add-btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .cart {
+            background: white;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 0;
+        }
+
+        .quantity button {
+            padding: 5px 10px;
+            margin: 0 4px;
+        }
+
+        .total {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .place-order {
+            background: #ff9900;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 17px;
+        }
+
+        .place-order:disabled {
+            background: #aaa;
+        }
+
+        .order-status {
+            background: white;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        #liveStatus {
+            font-size: 30px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .admin {
+            background: #fff;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .admin h2 {
+            margin-top: 0;
+        }
+
+        .admin-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .admin button {
+            background: #111;
+            color: white;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        #message {
+            margin-top: 15px;
+            color: #555;
+        }
+
+        @media(max-width: 600px) {
+            header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .container {
+                width: 92%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>🍴 QuickBite</h1>
+
+    <div>
+        WebSocket:
+        <span id="connectionStatus" class="disconnected">
+            Disconnected
+        </span>
+    </div>
+
+</header>
+
+
+<div class="container">
+
+    <!-- RESTAURANT -->
+
+    <div class="restaurant">
+
+        <h2 id="restaurantName">
+            QuickBite Restaurant
+        </h2>
+
+        <div class="restaurant-info">
+
+            <div>
+                <strong>Owner:</strong>
+                <span id="ownerName">Yamuna</span>
+            </div>
+
+            <div>
+                <strong>Location:</strong>
+                <span id="location">KL University</span>
+            </div>
+
+            <div>
+                <strong>Restaurant Status:</strong>
+
+                <span id="restaurantStatus" class="open">
+                    OPEN
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MENU -->
+
+    <h2 class="menu-title">
+        Menu
+    </h2>
+
+    <div class="menu" id="menu"></div>
+
+
+    <!-- CART -->
+
+    <div class="cart">
+
+        <h2>🛒 Shopping Cart</h2>
+
+        <div id="cartItems">
+            Your cart is empty.
+        </div>
+
+        <div class="total">
+            Total:
+            ₹<span id="cartTotal">0</span>
+        </div>
+
+        <button
+            id="placeOrderBtn"
+            class="place-order"
+            onclick="placeOrder()"
+            disabled>
+
+            Place Order
+
+        </button>
+
+    </div>
+
+
+    <!-- LIVE ORDER -->
+
+    <div class="order-status">
+
+        <h2>📦 Live Order Status</h2>
+
+        <p>
+            <strong>Order ID:</strong>
+            <span id="orderId">---</span>
+        </p>
+
+        <p>
+            <strong>Customer:</strong>
+            Roobini
+        </p>
+
+        <p>
+            <strong>Restaurant:</strong>
+            QuickBite Restaurant
+        </p>
+
+        <div id="liveStatus">
+            No Order
+        </div>
+
+        <p id="message">
+            Connecting to AWS...
+        </p>
+
+    </div>
+
+
+    <!-- ADMIN -->
+
+    <div class="admin">
+
+        <h2>⚙️ Restaurant Admin</h2>
+
+        <!-- RESTAURANT STATUS -->
+
+        <div class="admin-section">
+
+            <h3>Restaurant Status</h3>
+
+            <select id="adminRestaurantStatus">
+
+                <option value="OPEN">
+                    OPEN
+                </option>
+
+                <option value="CLOSED">
+                    CLOSED
+                </option>
+
+            </select>
+
+            <button onclick="updateRestaurantStatus()">
+                Update Restaurant Status
+            </button>
+
+        </div>
+
+
+        <!-- ORDER STATUS -->
+
+        <div class="admin-section">
+
+            <h3>Order Status</h3>
+
+            <input
+                type="text"
+                id="adminOrderId"
+                placeholder="Enter Order ID">
+
+            <select id="adminOrderStatus">
+
+                <option value="CONFIRMED">
+                    CONFIRMED
+                </option>
+
+                <option value="PREPARING">
+                    PREPARING
+                </option>
+
+                <option value="OUT_FOR_DELIVERY">
+                    OUT FOR DELIVERY
+                </option>
+
+                <option value="DELIVERED">
+                    DELIVERED
+                </option>
+
+            </select>
+
+            <button onclick="updateOrderStatus()">
+                Update Order Status
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+    ============================================================
+    AWS API GATEWAY WEBSOCKET URL
+    ============================================================
+    */
+
+    const WS_URL =
+    "wss://qsnh1doee6.execute-api.us-east-1.amazonaws.com/production/";
+
+let socket;
+
+function connectWebSocket() {
+
+    socket = new WebSocket(WS_URL);
+
+    socket.onopen = function () {
+        console.log("WebSocket Connected");
+
+        document.getElementById("wsStatus").innerText =
+            "WebSocket: Connected";
+    };
+
+    socket.onmessage = function (event) {
+
+        console.log("Received:", event.data);
+
+        const data = JSON.parse(event.data);
+
+        if (data.action === "orderUpdated") {
+
+            console.log(
+                "Order:",
+                data.orderId,
+                "Status:",
+                data.status
+            );
+
+            // Update your website here
+        }
+    };
+
+    socket.onerror = function (error) {
+        console.error("WebSocket Error:", error);
+    };
+
+    socket.onclose = function (event) {
+
+        console.log(
+            "WebSocket Closed",
+            event.code,
+            event.reason
+        );
+
+        document.getElementById("wsStatus").innerText =
+            "WebSocket: Disconnected";
+    };
+}
+
+connectWebSocket();
+
+    /*
+    ============================================================
+    MENU DATA
+    ============================================================
+    */
+
+    const menu = [
+
+        {
+            itemId: "ITEM001",
+            name: "Chicken Biryani",
+            price: 180,
+            available: true
+        },
+
+        {
+            itemId: "ITEM002",
+            name: "Veg Biryani",
+            price: 140,
+            available: true
+        },
+
+        {
+            itemId: "ITEM003",
+            name: "Chicken Fried Rice",
+            price: 160,
+            available: true
+        },
+
+        {
+            itemId: "ITEM004",
+            name: "Veg Fried Rice",
+            price: 130,
+            available: true
+        },
+
+        {
+            itemId: "ITEM005",
+            name: "Chicken Noodles",
+            price: 150,
+            available: true
+        },
+
+        {
+            itemId: "ITEM006",
+            name: "Veg Noodles",
+            price: 120,
+            available: true
+        },
+
+        {
+            itemId: "ITEM007",
+            name: "French Fries",
+            price: 90,
+            available: true
+        },
+
+        {
+            itemId: "ITEM008",
+            name: "Gulab Jamun",
+            price: 70,
+            available: true
+        },
+
+        {
+            itemId: "ITEM009",
+            name: "Paneer Butter Masala",
+            price: 170,
+            available: true
+        },
+
+        {
+            itemId: "ITEM010",
+            name: "Masala Dosa",
+            price: 80,
+            available: true
+        }
+
+    ];
+
+
+    /*
+    ============================================================
+    DISPLAY MENU
+    ============================================================
+    */
+
+    function displayMenu() {
+
+        const menuContainer =
+            document.getElementById("menu");
+
+        menuContainer.innerHTML = "";
+
+        menu.forEach(function(item) {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "menu-card";
+
+            card.innerHTML = `
+
+                <h3>${item.name}</h3>
+
+                <div class="price">
+                    ₹${item.price}
+                </div>
+
+                <button
+                    class="add-btn"
+                    onclick="addToCart('${item.itemId}')">
+
+                    Add to Cart
+
+                </button>
+
+            `;
+
+            menuContainer.appendChild(card);
+
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    ADD TO CART
+    ============================================================
+    */
+
+    function addToCart(itemId) {
+
+        const item =
+            menu.find(function(product) {
+
+                return product.itemId === itemId;
+
+            });
+
+
+        if (!item) {
+            return;
+        }
+
+
+        const existing =
+            cart.find(function(product) {
+
+                return product.itemId === itemId;
+
+            });
+
+
+        if (existing) {
+
+            existing.quantity++;
+
+        } else {
+
+            cart.push({
+
+                itemId: item.itemId,
+
+                name: item.name,
+
+                price: item.price,
+
+                quantity: 1
+
+            });
+
+        }
+
+
+        displayCart();
+
+    }
+
+
+    /*
+    ============================================================
+    DISPLAY CART
+    ============================================================
+    */
+
+    function displayCart() {
+
+        const cartContainer =
+            document.getElementById("cartItems");
+
+
+        if (cart.length === 0) {
+
+            cartContainer.innerHTML =
+                "Your cart is empty.";
+
+            document.getElementById("cartTotal")
+                .innerText = "0";
+
+            document.getElementById("placeOrderBtn")
+                .disabled = true;
+
+            return;
+        }
+
+
+        cartContainer.innerHTML = "";
+
+
+        let total = 0;
+
+
+        cart.forEach(function(item, index) {
+
+            total +=
+                item.price * item.quantity;
+
+
+            const row =
+                document.createElement("div");
+
+            row.className = "cart-item";
+
+
+            row.innerHTML = `
+
+                <div>
+
+                    <strong>
+                        ${item.name}
+                    </strong>
+
+                    <br>
+
+                    ₹${item.price}
+
+                </div>
+
+
+                <div class="quantity">
+
+                    <button
+                        onclick="decreaseQuantity(${index})">
+
+                        -
+
+                    </button>
+
+
+                    ${item.quantity}
+
+
+                    <button
+                        onclick="increaseQuantity(${index})">
+
+                        +
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            cartContainer.appendChild(row);
+
+        });
+
+
+        document.getElementById("cartTotal")
+            .innerText = total;
+
+
+        document.getElementById("placeOrderBtn")
+            .disabled = false;
+
+    }
+
+
+    /*
+    ============================================================
+    INCREASE QUANTITY
+    ============================================================
+    */
+
+    function increaseQuantity(index) {
+
+        cart[index].quantity++;
+
+        displayCart();
+
+    }
+
+
+    /*
+    ============================================================
+    DECREASE QUANTITY
+    ============================================================
+    */
+
+    function decreaseQuantity(index) {
+
+        cart[index].quantity--;
+
+
+        if (cart[index].quantity <= 0) {
+
+            cart.splice(index, 1);
+
+        }
+
+
+        displayCart();
+
+    }
+
+
+    /*
+    ============================================================
+    CONNECT WEBSOCKET
+    ============================================================
+    */
+
+    function connectWebSocket() {
+
+        if (
+            socket &&
+            socket.readyState === WebSocket.OPEN
+        ) {
+
+            return;
+
+        }
+
+
+        document.getElementById("message")
+            .innerText =
+            "Connecting to AWS WebSocket...";
+
+
+        socket =
+            new WebSocket(websocketURL);
+
+
+        socket.onopen = function() {
+
+            console.log(
+                "WebSocket connected"
+            );
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).innerText = "Connected";
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).className = "connection connected";
+
+
+            document.getElementById(
+                "message"
+            ).innerText =
+                "Connected successfully to AWS WebSocket.";
+
+        };
+
+
+        socket.onmessage = function(event) {
+
+            console.log(
+                "Received:",
+                event.data
+            );
+
+
+            try {
+
+                const data =
+                    JSON.parse(event.data);
+
+
+                handleWebSocketMessage(data);
+
+
+            } catch(error) {
+
+                console.error(
+                    "Invalid server response:",
+                    error
+                );
+
+            }
+
+        };
+
+
+        socket.onerror = function(error) {
+
+            console.error(
+                "WebSocket error:",
+                error
+            );
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).innerText =
+                "Error";
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).className =
+                "connection disconnected";
+
+
+            document.getElementById(
+                "message"
+            ).innerText =
+                "WebSocket connection error.";
+
+        };
+
+
+        socket.onclose = function() {
+
+            console.log(
+                "WebSocket disconnected"
+            );
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).innerText =
+                "Disconnected";
+
+
+            document.getElementById(
+                "connectionStatus"
+            ).className =
+                "connection disconnected";
+
+        };
+
+    }
+
+
+    /*
+    ============================================================
+    HANDLE WEBSOCKET MESSAGES
+    ============================================================
+    */
+
+    function handleWebSocketMessage(data) {
+
+
+        /*
+        ORDER UPDATE
+        */
+
+        if (
+            data.action === "orderUpdated" ||
+            data.action === "orderStatusUpdated"
+        ) {
+
+            updateOrderOnScreen(data);
+
+        }
+
+
+        /*
+        RESTAURANT UPDATE
+        */
+
+        if (
+            data.action === "restaurantUpdated" ||
+            data.action === "restaurantStatusUpdated"
+        ) {
+
+            updateRestaurantOnScreen(data);
+
+        }
+
+    }
+
+
+    /*
+    ============================================================
+    UPDATE ORDER ON SCREEN
+    ============================================================
+    */
+
+    function updateOrderOnScreen(data) {
+
+        if (data.orderId) {
+
+            currentOrderId =
+                data.orderId;
+
+
+            document.getElementById(
+                "orderId"
+            ).innerText =
+                data.orderId;
+
+        }
+
+
+        if (data.status) {
+
+            document.getElementById(
+                "liveStatus"
+            ).innerText =
+                formatStatus(data.status);
+
+
+            document.getElementById(
+                "message"
+            ).innerText =
+                "Order status updated live.";
+
+        }
+
+    }
+
+
+    /*
+    ============================================================
+    UPDATE RESTAURANT ON SCREEN
+    ============================================================
+    */
+
+    function updateRestaurantOnScreen(data) {
+
+        if (!data.status) {
+            return;
+        }
+
+
+        const status =
+            data.status.toUpperCase();
+
+
+        const statusElement =
+            document.getElementById(
+                "restaurantStatus"
+            );
+
+
+        statusElement.innerText =
+            status;
+
+
+        if (status === "OPEN") {
+
+            statusElement.className =
+                "open";
+
+            enableMenu();
+
+        } else {
+
+            statusElement.className =
+                "closed";
+
+            disableMenu();
+
+        }
+
+
+        document.getElementById(
+            "message"
+        ).innerText =
+            "Restaurant status updated live.";
+
+    }
+
+
+    /*
+    ============================================================
+    ENABLE MENU
+    ============================================================
+    */
+
+    function enableMenu() {
+
+        const buttons =
+            document.querySelectorAll(
+                ".add-btn"
+            );
+
+
+        buttons.forEach(function(button) {
+
+            button.disabled = false;
+
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    DISABLE MENU
+    ============================================================
+    */
+
+    function disableMenu() {
+
+        const buttons =
+            document.querySelectorAll(
+                ".add-btn"
+            );
+
+
+        buttons.forEach(function(button) {
+
+            button.disabled = true;
+
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    FORMAT STATUS
+    ============================================================
+    */
+
+    function formatStatus(status) {
+
+        return status
+            .replaceAll("_", " ");
+
+    }
+
+
+    /*
+    ============================================================
+    PLACE ORDER
+    ============================================================
+    */
+
+    function placeOrder() {
+
+        if (cart.length === 0) {
+
+            alert(
+                "Please add items to cart."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN
+        ) {
+
+            alert(
+                "WebSocket is not connected."
+            );
+
+            return;
+
+        }
+
+
+        const orderId =
+            "ORDER" +
+            Math.floor(
+                100000 +
+                Math.random() * 900000
+            );
+
+
+        currentOrderId =
+            orderId;
+
+
+        const total =
+            cart.reduce(
+                function(sum, item) {
+
+                    return sum +
+                        item.price *
+                        item.quantity;
+
+                },
+                0
+            );
+
+
+        const message = {
+
+            action: "placeOrder",
+
+            orderId: orderId,
+
+            customerName: "Roobini",
+
+            restaurantId: "REST001",
+
+            restaurantName:
+                "QuickBite Restaurant",
+
+            items: cart,
+
+            total: total,
+
+            status: "CONFIRMED"
+
+        };
+
+
+        socket.send(
+            JSON.stringify(message)
+        );
+
+
+        document.getElementById(
+            "orderId"
+        ).innerText =
+            orderId;
+
+
+        document.getElementById(
+            "liveStatus"
+        ).innerText =
+            "CONFIRMED";
+
+
+        document.getElementById(
+            "message"
+        ).innerText =
+            "Order placed successfully. Waiting for live updates...";
+
+
+        /*
+        Put order ID in Admin box
+        */
+
+        document.getElementById(
+            "adminOrderId"
+        ).value =
+            orderId;
+
+
+        cart = [];
+
+        displayCart();
+
+
+        console.log(
+            "Order sent:",
+            message
+        );
+
+    }
+
+
+    /*
+    ============================================================
+    ADMIN - UPDATE ORDER
+    ============================================================
+    */
+
+    function updateOrderStatus() {
+
+        if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN
+        ) {
+
+            alert(
+                "Connect to WebSocket first."
+            );
+
+            return;
+
+        }
+
+
+        const orderId =
+            document.getElementById(
+                "adminOrderId"
+            ).value;
+
+
+        const status =
+            document.getElementById(
+                "adminOrderStatus"
+            ).value;
+
+
+        if (!orderId) {
+
+            alert(
+                "Enter Order ID."
+            );
+
+            return;
+
+        }
+
+
+        const message = {
+
+            action: "updateOrder",
+
+            orderId: orderId,
+
+            status: status
+
+        };
+
+
+        socket.send(
+            JSON.stringify(message)
+        );
+
+
+        console.log(
+            "Order update sent:",
+            message
+        );
+
+
+        /*
+        Update current customer screen immediately.
+        The Lambda broadcast should also send the same
+        update to connected clients.
+        */
+
+        updateOrderOnScreen({
+
+            orderId: orderId,
+
+            status: status
+
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    ADMIN - UPDATE RESTAURANT
+    ============================================================
+    */
+
+    function updateRestaurantStatus() {
+
+        if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN
+        ) {
+
+            alert(
+                "Connect to WebSocket first."
+            );
+
+            return;
+
+        }
+
+
+        const status =
+            document.getElementById(
+                "adminRestaurantStatus"
+            ).value;
+
+
+        const message = {
+
+            action:
+                "updateRestaurant",
+
+            restaurantId:
+                "REST001",
+
+            restaurantName:
+                "QuickBite Restaurant",
+
+            status:
+                status
+
+        };
+
+
+        socket.send(
+            JSON.stringify(message)
+        );
+
+
+        console.log(
+            "Restaurant update sent:",
+            message
+        );
+
+
+        /*
+        Update current screen immediately.
+        Lambda should broadcast this to all
+        other connected customers.
+        */
+
+        updateRestaurantOnScreen({
+
+            status: status
+
+        });
+
+    }
+
+
+    /*
+    ============================================================
+    START WEBSITE
+    ============================================================
+    */
+
+    displayMenu();
+
+    displayCart();
+
+    connectWebSocket();
+
+</script>
+
+</body>
+</html>
