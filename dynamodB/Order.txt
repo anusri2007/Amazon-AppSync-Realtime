@@ -1,0 +1,14 @@
+{
+  "id": {
+    "S": "ORDER001"
+  },
+  "customerName": {
+    "S": "Roobini"
+  },
+  "item": {
+    "S": "Chicken Biryani"
+  },
+  "status": {
+    "S": "PREPARING"
+  }
+}
